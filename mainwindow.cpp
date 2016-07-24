@@ -5,12 +5,19 @@
 #include <QtCore/QFile>
 #include <QtCore/QIODevice>
 
+#define RX_BUF_SIZE  1024*8
+#define STR_BUF_SIZE  RX_BUF_SIZE*1024
+char lData[RX_BUF_SIZE];
+char lStrBuf[STR_BUF_SIZE];
+int  lStrBuf_addr=0;
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-
+//    lData = new char(RX_BUF_SIZE);
+//    lStrBuf = new char(STR_BUF_SIZE);
+    memset(lStrBuf,0,STR_BUF_SIZE);
     ui->closeMyComBtn->setEnabled(false); //开始“关闭串口”按钮不可用
     ui->sendMsgBtn->setEnabled(false); //开始“发送数据”按钮不可用
 
@@ -18,23 +25,32 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+//    delete lData;
     delete ui;
 }
-char lStrBuf[256];
-char lData[256];
+
+
 int  SentOrder = 0;
 void MainWindow::readMyCom() //读串口函数
 {
-//    static QByteArray gRecData="";
+    static QByteArray gRecData="";
 //    QByteArray temp = myCom->readAll();
 ////    //读取串口缓冲区的所有数据给临时变量temp
 //    char *lData = temp.data();
-
-    int lCnt = myCom->read(lData,sizeof(lData));
+    memset(lData,0,RX_BUF_SIZE);
+    int lCnt = myCom->read(lData,RX_BUF_SIZE);
     if(lCnt>0){
-        sprintf(lStrBuf,"%d>>%d:%x,%x,%x\r\n",SentOrder++,lCnt,*(int *)lData,*(int *)(lData+4),*(int *)(lData+8));
-        ui->textBrowser->insertPlainText(lStrBuf);
-        ui->textBrowser->moveCursor(QTextCursor::End);
+//        sprintf(lStrBuf,"%d>>%d:%x,%x,%x\r\n",SentOrder++,lCnt,*(int *)lData,*(int *)(lData+4),*(int *)(lData+8));
+//        memcpy(lStrBuf+lStrBuf_addr,lData,lCnt);
+        gRecData.append(lData);
+        lStrBuf_addr += lCnt;
+//        ui->textBrowser->insertPlainText(lStrBuf);
+        if(lStrBuf_addr>100000){
+            ui->textBrowser->setText(gRecData);
+//            ui->textBrowser->moveCursor(QTextCursor::End);
+            lStrBuf_addr=0;
+        }
+
     }
 }
 void MainWindow::on_openMyComBtn_clicked()
