@@ -119,72 +119,48 @@ void MainWindow::on_TranBtn_clicked()
     char lPrintString[128];
     lSentData[0] = 0xAE;
     lSentData[1] = 0xA2;
-    lSentData[2] = 0x40;
+//    lSentData[2] = 0x40;
     //lSentData[2] = 0x30;
     //lSentData[2] = 0x20;
     //lSentData[2] = 0x10;
 
-//    *(float *)(lSentData+3) = 8.4911f;//3#Gyro
-//    *(float *)(lSentData+7) = 37.8781f;
-//    *(float *)(lSentData+11) = 6.3112f;
+    lSentData[2] = 0x40;
+    *(float *)(lSentData+3) = 11.8322;//3#Gyro
+    *(float *)(lSentData+7) = 45.7210f;
+    *(float *)(lSentData+11) = 22.2408f;
 
 
-//    *(float *)(lSentData+15) = 16.367f;//
-//    *(float *)(lSentData+19) = 0.2965f;
-//    *(float *)(lSentData+23) = 1.3981f;
-//    *(float *)(lSentData+27) = -0.2797f;
-//    *(float *)(lSentData+31) = 16.2792f;//
-//    *(float *)(lSentData+35) = -0.2604f;
-//    *(float *)(lSentData+39) = -1.3182f;
-//    *(float *)(lSentData+43) = 0.1445f;
-//    *(float *)(lSentData+47) = 16.4142f;//
+    *(float *)(lSentData+15) = 16.3303f;//
+    *(float *)(lSentData+19) = -0.0670f;
+    *(float *)(lSentData+23) = 0.644f;
+    *(float *)(lSentData+27) = 0.0414f;
+    *(float *)(lSentData+31) = 16.364f;//
+    *(float *)(lSentData+35) = 0.0889f;
+    *(float *)(lSentData+39) = -1.5428f;
+    *(float *)(lSentData+43) = -0.2155f;
+    *(float *)(lSentData+47) = 16.3462f;//
 
-    *(float *)(lSentData+3) = 22.8523f;//3#ACCEL
-    *(float *)(lSentData+7) = -33.3464f;
-    *(float *)(lSentData+11) = -25.4625f;
-
-
-    *(float *)(lSentData+15) = 4087.212f;//
-    *(float *)(lSentData+19) = 73.4102f;
-    *(float *)(lSentData+23) = 289.9808f;
-    *(float *)(lSentData+27) = -69.2f;
-    *(float *)(lSentData+31) = 4101.7323f;//
-    *(float *)(lSentData+35) = -71.9285f;
-    *(float *)(lSentData+39) = -311.1946f;
-    *(float *)(lSentData+43) = 50.5323f;
-    *(float *)(lSentData+47) = 4098.2975f;//
+//    lSentData[2] = 0x30;
+//    *(float *)(lSentData+3) = 47.9461f;//3#ACCEL
+//    *(float *)(lSentData+7) = -52.3691f;
+//    *(float *)(lSentData+11) = 51.9598f;
 
 
-//    *(float *)(lSentData+3) = -4.1165f;//1#ACCEL
-//    *(float *)(lSentData+7) = -83.5961f;
-//    *(float *)(lSentData+11) = 178.8089f;
+//    *(float *)(lSentData+15) = 4078.1867f;//
+//    *(float *)(lSentData+19) = -17.8834f;
+//    *(float *)(lSentData+23) = 393.4122f;
+//    *(float *)(lSentData+27) = 9.8891f;
+//    *(float *)(lSentData+31) = 4099.9922f;//
+//    *(float *)(lSentData+35) = 23.9538f;
+//    *(float *)(lSentData+39) = -403.9699f;
+//    *(float *)(lSentData+43) = -34.2214f;
+//    *(float *)(lSentData+47) = 4111.3204f;//
 
 
-//    *(float *)(lSentData+15) = 4092.456f;//
-//    *(float *)(lSentData+19) = -38.6172f;
-//    *(float *)(lSentData+23) = 267.5296f;
-//    *(float *)(lSentData+27) = 36.4395f;
-//    *(float *)(lSentData+31) = 4095.288f;//
-//    *(float *)(lSentData+35) = -95.1961f;
-//    *(float *)(lSentData+39) = -143.732f;
-//    *(float *)(lSentData+43) = 111.3026f;
-//    *(float *)(lSentData+47) = 4093.6032f;//
 
 
-//    *(float *)(lSentData+3) = 7.1342f;//1#GYRO
-//    *(float *)(lSentData+7) = 13.7555f;
-//    *(float *)(lSentData+11) = -4.8458f;
 
 
-//    *(float *)(lSentData+15) = 16.3721f;//
-//    *(float *)(lSentData+19) = -0.1494f;
-//    *(float *)(lSentData+23) = 0.697f;
-//    *(float *)(lSentData+27) = 0.1367f;
-//    *(float *)(lSentData+31) = 16.3517f;//
-//    *(float *)(lSentData+35) = -0.3487f;
-//    *(float *)(lSentData+39) = -0.6272f;
-//    *(float *)(lSentData+43) = 0.5559f;
-//    *(float *)(lSentData+47) = 16.3526f;//
 
     lSentData[51] = 0xEA;
 
