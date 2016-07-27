@@ -28,18 +28,90 @@ MainWindow::~MainWindow()
 //    delete lData;
     delete ui;
 }
+#define SUNCO_RX_CMD_SIZE 42
+
+bool rx_filter(char *rx_data,char *rx_buf,int rx_buf_len)
+{
+        static int32_t	_rx_cmd_order = 0;
+        static int32_t	_rx_cmd_data_addr = 0 ;
+
+        for(int i=0;i<rx_buf_len;i++){
+                if(_rx_cmd_data_addr>SUNCO_RX_CMD_SIZE){//
+                        _rx_cmd_data_addr = 0;;
+                        _rx_cmd_order= 0 ;
+                }
+
+                switch(_rx_cmd_order){
+                        case 0:
+//                                char tmp = rx_buf[i];
+                                if((rx_buf[i]==0xFF)||(rx_buf[i]==0xF0)){
+                                        _rx_cmd_order = 1;
+                                }
+                                break;
+                        case 1:
+                                if(rx_buf[i]==0x8A){
+                                        // warnx("Find sencond Head");
+                                        _rx_cmd_order = 2;
+
+                                        memset( rx_data , 0 , RX_BUF_SIZE );
+                                        rx_data[0] = 0x00;
+                                        rx_data[1] = 0x8A;
+                                        _rx_cmd_data_addr = 2;
+                                }else{
+                                        // warnx("No Find sencond Head");
+                                        _rx_cmd_order = 0;
+                                }
+                                break;
+                        case 2://				rx_data[_rx_cmd_data_addr] = rx_buf[i];
+
+                                if( ++_rx_cmd_data_addr == SUNCO_RX_CMD_SIZE ){
+
+//                                        if(rx_buf[i]==0x0A){//
+//                                                warnx("_rx_cmd_data_addr=%d",_rx_cmd_data_addr);
+                                                _rx_cmd_order = 0;//order 0
+                                                // warnx("Rx from Camera:%x,%x,%x,%x,%x,%x,%x,%x",rx_data[0],rx_data[1],rx_data[2],rx_data[3];
+                                                return true;
+//                                        }else{
+////                                                warnx("Don't find Cmd.");
+//                                                _rx_cmd_data_addr = 0;;
+//                                                _rx_cmd_order= 0 ;
+//                                        }
+                                }
+
+                                break;
+                        default:
+                                // warnx("Error _rx_cmd_order value = %x",_rx_cmd_order);
+                                _rx_cmd_order = 0;//
+                                break;
+                }
+        }
+        return false;
+}
 
 
 int  SentOrder = 0;
 void MainWindow::readMyCom() //读串口函数
 {
     static QByteArray gRecData="";
+    static char lRxCmd[64];
 //    QByteArray temp = myCom->readAll();
 ////    //读取串口缓冲区的所有数据给临时变量temp
 //    char *lData = temp.data();
     memset(lData,0,RX_BUF_SIZE);
     int lCnt = myCom->read(lData,RX_BUF_SIZE);
     if(lCnt>0){
+        if(rx_filter(lRxCmd,lData,lCnt)){
+            char lStr[256];
+            memset(lStr,0,sizeof(lStr));
+            sprintf(lStr,"AA:%8.6f",*(double *)rx_filter);
+            ui->textBrowser->setText(lStr);
+            memset(lRxCmd,0,sizeof(lRxCmd));
+        }
+
+
+
+
+
 //        sprintf(lStrBuf,"%d>>%d:%x,%x,%x\r\n",SentOrder++,lCnt,*(int *)lData,*(int *)(lData+4),*(int *)(lData+8));
 //        memcpy(lStrBuf+lStrBuf_addr,lData,lCnt);
         gRecData.append(lData);
@@ -109,7 +181,68 @@ void MainWindow::on_closeMyComBtn_clicked()
 
 void MainWindow::on_sendMsgBtn_clicked()
 {
-    myCom->write(ui->sendMsgLineEdit->text().toAscii());
+//    myCom->write(ui->sendMsgLineEdit->text().toAscii());
+
+    char lSentData[64];
+    lSentData[0] = 0xAE;
+    lSentData[1] = 0xA2;
+
+//    -2.358333333	3.889319444	-0.83775
+//    16.34295833	-0.028242796	0.097135871
+//    0.030534328	16.33298333	-0.029176391
+//    -0.101929836	0.029802727	16.31939583
+
+    lSentData[2] = 0x40;
+    *(float *)(lSentData+3) = -2.358333333f;//3#Gyro
+    *(float *)(lSentData+7) = 3.889319444f;
+    *(float *)(lSentData+11) = -0.83775f;
+
+
+    *(float *)(lSentData+15) = 16.34295833f;//
+    *(float *)(lSentData+19) = -0.028242796f;
+    *(float *)(lSentData+23) = 0.097135871f;
+
+    *(float *)(lSentData+27) = 0.030534328f;
+    *(float *)(lSentData+31) = 16.33298333f;//
+    *(float *)(lSentData+35) = -0.029176391f;
+
+    *(float *)(lSentData+39) = -0.101929836f;
+    *(float *)(lSentData+43) = 0.029802727f;
+    *(float *)(lSentData+47) = 16.31939583f;//
+
+
+
+
+
+
+//    -6.001736111	29.81076389	76.79620833
+//    4079.780167	125.2491667	-414.4640417
+//    -115.2742917	4094.3785	130.2855417
+//    418.561	-120.3297917	4075.508792
+
+
+
+//    lSentData[2] = 0x30;
+//    *(float *)(lSentData+3) = -6.001736111f;//3#ACCEL
+//    *(float *)(lSentData+7) = 29.81076389f;
+//    *(float *)(lSentData+11) = 76.79620833f;
+
+
+//    *(float *)(lSentData+15) = 4079.780167f;//
+//    *(float *)(lSentData+19) = 125.2491667f;
+//    *(float *)(lSentData+23) = -414.4640417f;
+
+//    *(float *)(lSentData+27) = -115.2742917f;
+//    *(float *)(lSentData+31) = 4094.3785f;//
+//    *(float *)(lSentData+35) = 130.2855417f;
+
+//    *(float *)(lSentData+39) = 418.561f;
+//    *(float *)(lSentData+43) = -120.3297917f;
+//    *(float *)(lSentData+47) = 4075.508792f;//
+
+    lSentData[51] = 0xEA;
+
+    myCom->write(lSentData,52);
     //以ASCII码形式将行编辑框中的数据写入串口
 }
 
