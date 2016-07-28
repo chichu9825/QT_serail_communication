@@ -20,6 +20,9 @@ private:
     Ui::MainWindow *ui;
     Win_QextSerialPort *myCom;
 private slots:
+    void on_ReadFileBtn_clicked();
+    void on_testBtn_clicked();
+    void on_CleanScreamBtn_clicked();
     void on_TranBtn_clicked();
     void on_sendMsgBtn_clicked();
     void on_closeMyComBtn_clicked();

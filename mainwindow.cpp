@@ -1,9 +1,14 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QtCore/QTextStream>
+#include <QtCore/QCoreApplication>
+#include <QFileInfo>
+#include <QStringList>
+#include <QDateTime>
 #include <QMessageBox>
 #include <QtCore/QFile>
 #include <QtCore/QIODevice>
+#include <QDebug>
 
 #define RX_BUF_SIZE  1024*8
 #define STR_BUF_SIZE  RX_BUF_SIZE*1024
@@ -22,7 +27,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->sendMsgBtn->setEnabled(false); //开始“发送数据”按钮不可用
 
 }
-
+char tmp;
 MainWindow::~MainWindow()
 {
 //    delete lData;
@@ -43,13 +48,14 @@ bool rx_filter(char *rx_data,char *rx_buf,int rx_buf_len)
 
                 switch(_rx_cmd_order){
                         case 0:
-//                                char tmp = rx_buf[i];
-                                if((rx_buf[i]==0xFF)||(rx_buf[i]==0xF0)){
+                                tmp = rx_buf[i];
+                                if(((unsigned char)rx_buf[i]==0xFF)||((unsigned char)rx_buf[i]==0xF0)){
+//                                if((unsigned char)rx_buf[i]==0xFF){
                                         _rx_cmd_order = 1;
                                 }
                                 break;
                         case 1:
-                                if(rx_buf[i]==0x8A){
+                                if((unsigned char)rx_buf[i]==0x8A){
                                         // warnx("Find sencond Head");
                                         _rx_cmd_order = 2;
 
@@ -187,58 +193,64 @@ void MainWindow::on_sendMsgBtn_clicked()
     lSentData[0] = 0xAE;
     lSentData[1] = 0xA2;
 
+
+
+
 //    -2.358333333	3.889319444	-0.83775
-//    16.34295833	-0.028242796	0.097135871
-//    0.030534328	16.33298333	-0.029176391
-//    -0.101929836	0.029802727	16.31939583
-
-    lSentData[2] = 0x40;
-    *(float *)(lSentData+3) = -2.358333333f;//3#Gyro
-    *(float *)(lSentData+7) = 3.889319444f;
-    *(float *)(lSentData+11) = -0.83775f;
+//    -16.34295833	0.028242796	0.097135871
+//    -0.030534328	16.33298333	0.029176391
+//    -0.101929836	-0.029802727	-16.31939583
 
 
-    *(float *)(lSentData+15) = 16.34295833f;//
-    *(float *)(lSentData+19) = -0.028242796f;
-    *(float *)(lSentData+23) = 0.097135871f;
-
-    *(float *)(lSentData+27) = 0.030534328f;
-    *(float *)(lSentData+31) = 16.33298333f;//
-    *(float *)(lSentData+35) = -0.029176391f;
-
-    *(float *)(lSentData+39) = -0.101929836f;
-    *(float *)(lSentData+43) = 0.029802727f;
-    *(float *)(lSentData+47) = 16.31939583f;//
+//    lSentData[2] = 0x40;
+//    *(float *)(lSentData+3) = -2.358333333f  ;//3#Gyro
+//    *(float *)(lSentData+7) = 3.889319444f   ;
+//    *(float *)(lSentData+11) = -0.83775f    ;
 
 
+//    *(float *)(lSentData+15) = 16.34295833f   ;//
+//    *(float *)(lSentData+19) = -0.028242796f   ;
+//    *(float *)(lSentData+23) = 0.097135871f    ;
 
+//    *(float *)(lSentData+27) = 0.030534328f   ;
+//    *(float *)(lSentData+31) = 16.33298333f   ;//
+//    *(float *)(lSentData+35) = -0.029176391f   ;
+
+//    *(float *)(lSentData+39) = -0.101929836f;
+//    *(float *)(lSentData+43) = 0.029802727f;
+//    *(float *)(lSentData+47) = 16.31939583f;//
 
 
 
-//    -6.001736111	29.81076389	76.79620833
-//    4079.780167	125.2491667	-414.4640417
-//    -115.2742917	4094.3785	130.2855417
-//    418.561	-120.3297917	4075.508792
 
 
 
-//    lSentData[2] = 0x30;
-//    *(float *)(lSentData+3) = -6.001736111f;//3#ACCEL
-//    *(float *)(lSentData+7) = 29.81076389f;
-//    *(float *)(lSentData+11) = 76.79620833f;
+//    -6.001736111	29.8108	76.7962
+//    -25.09258333	30.94791667	74.09870833
+
+//    4079.780167	-115.2742917	418.561
+//    125.2491667	4094.3785	-120.3297917
+//    -414.4640417	130.2855417	4075.508792
 
 
-//    *(float *)(lSentData+15) = 4079.780167f;//
-//    *(float *)(lSentData+19) = 125.2491667f;
-//    *(float *)(lSentData+23) = -414.4640417f;
 
-//    *(float *)(lSentData+27) = -115.2742917f;
-//    *(float *)(lSentData+31) = 4094.3785f;//
-//    *(float *)(lSentData+35) = 130.2855417f;
+    lSentData[2] = 0x30;
+    *(float *)(lSentData+3) = -6.001736111f;//3#ACCEL
+    *(float *)(lSentData+7) = 29.81076389f;
+    *(float *)(lSentData+11) = 76.79620833f;
 
-//    *(float *)(lSentData+39) = 418.561f;
-//    *(float *)(lSentData+43) = -120.3297917f;
-//    *(float *)(lSentData+47) = 4075.508792f;//
+
+    *(float *)(lSentData+15) = 4079.780167f;//
+    *(float *)(lSentData+19) = -115.2742917f;
+    *(float *)(lSentData+23) = 418.561f;
+
+    *(float *)(lSentData+27) = 125.2491667f;
+    *(float *)(lSentData+31) = 4094.3785f;//
+    *(float *)(lSentData+35) = -120.3297917f;
+
+    *(float *)(lSentData+39) = -414.4640417f;
+    *(float *)(lSentData+43) = 130.2855417f;
+    *(float *)(lSentData+47) = 4075.508792f;//
 
     lSentData[51] = 0xEA;
 
@@ -257,43 +269,25 @@ void MainWindow::on_TranBtn_clicked()
     //lSentData[2] = 0x20;
     //lSentData[2] = 0x10;
 
+
+
     lSentData[2] = 0x40;
-    *(float *)(lSentData+3) = 11.8322;//3#Gyro
-    *(float *)(lSentData+7) = 45.7210f;
-    *(float *)(lSentData+11) = 22.2408f;
+    *(float *)(lSentData+3) = 10.67141667f  ;//3#Gyro
+    *(float *)(lSentData+7) = 3.100902778f   ;
+    *(float *)(lSentData+11) = 46.16519444f    ;
 
 
-    *(float *)(lSentData+15) = 16.3303f;//
-    *(float *)(lSentData+19) = -0.0670f;
-    *(float *)(lSentData+23) = 0.644f;
-    *(float *)(lSentData+27) = 0.0414f;
-    *(float *)(lSentData+31) = 16.364f;//
-    *(float *)(lSentData+35) = 0.0889f;
-    *(float *)(lSentData+39) = -1.5428f;
-    *(float *)(lSentData+43) = -0.2155f;
-    *(float *)(lSentData+47) = 16.3462f;//
+    *(float *)(lSentData+15) = 16.3972375f   ;//
+    *(float *)(lSentData+19) = 0.789029167f   ;
+    *(float *)(lSentData+23) = 1.121291667f    ;
 
-//    lSentData[2] = 0x30;
-//    *(float *)(lSentData+3) = 47.9461f;//3#ACCEL
-//    *(float *)(lSentData+7) = -52.3691f;
-//    *(float *)(lSentData+11) = 51.9598f;
+    *(float *)(lSentData+27) = -0.784379167f   ;
+    *(float *)(lSentData+31) = 16.314625f   ;//
+    *(float *)(lSentData+35) = 0.0076625f   ;
 
-
-//    *(float *)(lSentData+15) = 4078.1867f;//
-//    *(float *)(lSentData+19) = -17.8834f;
-//    *(float *)(lSentData+23) = 393.4122f;
-//    *(float *)(lSentData+27) = 9.8891f;
-//    *(float *)(lSentData+31) = 4099.9922f;//
-//    *(float *)(lSentData+35) = 23.9538f;
-//    *(float *)(lSentData+39) = -403.9699f;
-//    *(float *)(lSentData+43) = -34.2214f;
-//    *(float *)(lSentData+47) = 4111.3204f;//
-
-
-
-
-
-
+    *(float *)(lSentData+39) = -1.208220833f;
+    *(float *)(lSentData+43) = -0.2182875f;
+    *(float *)(lSentData+47) = 16.3757375f;//
 
     lSentData[51] = 0xEA;
 
@@ -305,4 +299,70 @@ void MainWindow::on_TranBtn_clicked()
     sprintf(lPrintString,"\r\n");
     ui->textBrowser->insertPlainText(lPrintString);
     ui->textBrowser->moveCursor(QTextCursor::End);
+}
+
+void MainWindow::on_CleanScreamBtn_clicked()
+{
+    ui->textBrowser->clear();
+}
+
+void MainWindow::on_testBtn_clicked()
+{
+    ui->textBrowser->insertPlainText("111111111111111111111111\r\n");
+}
+
+float lFileData[8][3];
+
+
+
+void MainWindow::on_ReadFileBtn_clicked()
+{
+    QFile file(ui->FileName_lineEdit->text());
+//    QFile file("D:\Qt\test\111.cpp");
+    if(file.open(QIODevice::ReadOnly|QIODevice::Text)){
+        QString lReadBuf;
+        QString lStrValue;
+//        QString lPrint;
+        QStringList lStrlist;
+        for(int i=0;i<8;i++){
+            lReadBuf = file.readLine(256);
+
+            lStrlist = lReadBuf.split(",");
+            lStrValue = lStrlist.at(0);
+            lFileData[i][0] = lStrValue.toFloat();
+            lStrValue = lStrlist.at(1);
+            lFileData[i][1] = lStrValue.toFloat();
+            lStrValue = lStrlist.at(2);
+            lFileData[i][2] = lStrValue.toFloat();
+            ui->textBrowser->append(QString(" Order=%1: %2 | %3 | %4 ").arg(i).arg(lFileData[i][0]).arg(lFileData[i][1]).arg(lFileData[i][2]));
+//            ui->textBrowser->insertPlainText(lStrlist.at(0));
+//            ui->textBrowser->insertPlainText(lStrlist.at(1));
+//            ui->textBrowser->insertPlainText(lStrlist.at(2));
+//            for(int j=0;j<3;j++){
+//                lStrValue = lStrlist.at(i);
+////                lFileData[i][j] = lStrValue.toFloat();
+////                ui->textBrowser->insertPlainText(QString(" A: %1 ").arg(lFileData[i][j]));
+//                  ui->textBrowser->insertPlainText(lStrValue);
+//            }
+//            ui->textBrowser->insertPlainText("\r\n");
+        }
+
+
+
+
+
+
+
+
+//        ui->textBrowser->insertPlainText(lReadBuf);
+//        ui->textBrowser->insertPlainText(lStrlist.at(0));
+
+//        lReadBuf = file.readLine(256);
+//        ui->textBrowser->insertPlainText(lReadBuf);
+
+    }else{
+        ui->textBrowser->insertPlainText(ui->FileName_lineEdit->text());
+         ui->textBrowser->insertPlainText("File Open failed!\r\n");
+    }
+    file.close();
 }
