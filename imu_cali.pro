@@ -14,11 +14,13 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     win_qextserialport.cpp \
     qextserialport.cpp \
-    qextserialbase.cpp
+    qextserialbase.cpp \
+    com_fifo.cpp
 
 HEADERS  += mainwindow.h \
     win_qextserialport.h \
     qextserialport.h \
-    qextserialbase.h
+    qextserialbase.h \
+    com_fifo.h
 
 FORMS    += mainwindow.ui

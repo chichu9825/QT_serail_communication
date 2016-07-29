@@ -11,22 +11,33 @@
 #include <QFileDialog>
 #include <QDebug>
 #include <QTimer>
+#include "com_fifo.h"
 
-#define RX_BUF_SIZE  1024*16
-#define STR_BUF_SIZE  RX_BUF_SIZE*1024
-char lData[RX_BUF_SIZE];
+#define RX_BUF_SIZE  1024*512
+#define STR_BUF_SIZE  1024*1024
+
+
+
+char rx_lData[RX_BUF_SIZE];
+char rx_DataSave[RX_BUF_SIZE];
+int  rx_DataSave_addr=0;
 char lStrBuf[STR_BUF_SIZE];
 int  lStrBuf_addr=0;
+
+
+
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-//    lData = new char(RX_BUF_SIZE);
-//    lStrBuf = new char(STR_BUF_SIZE);
+    _RxBigBuffer = (unsigned char *)malloc(RX_BIG_BUFFER_SIZE);
+    _RxBigBufferWriteAddr = 0;
+
     memset(lStrBuf,0,STR_BUF_SIZE);
     _ComIsOpen = false;
-    _DisplayTimer.setInterval(500);
+    _DisplayTimer.setInterval(1000);
     _DisplayTimer.start();
     connect(&_DisplayTimer,SIGNAL(timeout()),this,SLOT(DisplayTimeout()));
 
@@ -43,7 +54,7 @@ MainWindow::MainWindow(QWidget *parent) :
 char tmp;
 MainWindow::~MainWindow()
 {
-//    delete lData;
+
     delete ui;
 }
 #define SUNCO_RX_CMD_SIZE 42
@@ -114,35 +125,76 @@ void MainWindow::DisplayTimeout()
 //    ui->textBrowser->append("Hello");
 }
 
+
+
 int  SentOrder = 0;
 void MainWindow::readMyCom() //读串口函数
 {
     static QByteArray gRecData="";
-//    static char lRxCmd[64];
-
+    static char lRxCmd[64];
+    static int lRxCmdCnt=0;
 //    QByteArray temp = myCom->readAll();
 ////    //读取串口缓冲区的所有数据给临时变量temp
-//    char *lData = temp.data();
-    memset(lData,0,RX_BUF_SIZE);
-    int lCnt = myCom->read(lData,RX_BUF_SIZE);
+//    char *rx_lData = temp.data();
+    memset(rx_lData,0,RX_BUF_SIZE);
+    int lCnt = myCom->read(rx_lData,RX_BUF_SIZE);
 
     ui->textBrowser->append(QString("lCnt:%1").arg(lCnt));
-//    if(lCnt>0){
-//        if(rx_filter(lRxCmd,lData,lCnt)){
-//            static int lRxCmdCnt = 0;
-//            static int lRxCmdPrintCnt = 0;
-//            static int lRxCmdTotalCnt = 0;
-//            ++lRxCmdTotalCnt;
-//            if( ++lRxCmdCnt>200 ){
-//                lRxCmdCnt = 0;
-//                char lStr[256];
-//                memset(lStr,0,sizeof(lStr));
-//                sprintf(lStr,"Order:%d | Total:%8d",lRxCmdPrintCnt++,lRxCmdTotalCnt);
-////                ui->textBrowser->setText(lStr);
-////                ui->textBrowser->append("Hello");
-//            }
-//            memset(lRxCmd,0,sizeof(lRxCmd));
+
+    if(lCnt>0){
+        memcpy(rx_DataSave+rx_DataSave_addr,rx_lData,lCnt);
+        rx_DataSave_addr += lCnt;
+        int lCmdReadAddr = 0;
+        if( rx_DataSave_addr> 1024 ){
+
+            for(int i=0;i<(rx_DataSave_addr-SUNCO_RX_CMD_SIZE-1);i++){
+
+                if( ((unsigned char)rx_DataSave[i]==0xFF)
+                                        ||((unsigned char)rx_DataSave[i+1]==0x8A)  ){
+
+
+                    if(rx_filter(lRxCmd,rx_DataSave,SUNCO_RX_CMD_SIZE)){
+                        lRxCmdCnt++;
+                    }
+                    lCmdReadAddr += SUNCO_RX_CMD_SIZE;
+                }else{
+                    ++lCmdReadAddr;
+                }
+            }
+        }
+        char lTmp[1024*16];
+        memcpy(lTmp,rx_DataSave+lCmdReadAddr,rx_DataSave_addr-lCmdReadAddr);
+        memcpy(rx_DataSave,lTmp,rx_DataSave_addr-lCmdReadAddr);
+        rx_DataSave_addr = rx_DataSave_addr-lCmdReadAddr;
+//        if( (_RxBigBufferWriteAddr+lCnt )< RX_BIG_BUFFER_SIZE ){
+//            memcpy(_RxBigBuffer+_RxBigBufferWriteAddr,rx_lData,lCnt);
+//            _RxBigBufferWriteAddr += lCnt;
 //        }
+
+//        for(int i=0;i<( _RxBigBufferWriteAddr-_RxBigBufferReadAddr-SUNCO_RX_CMD_SIZE );i++){
+//        }
+
+//        int lInputFilterAddr = 0;
+//        while( lCnt > lInputFilterAddr ){
+
+//            if((lCnt-lInputFilterAddr)>SUNCO_RX_CMD_SIZE){
+//                if(rx_filter(lRxCmd,lData,lCnt)){
+
+//                    static int lRxCmdPrintCnt = 0;
+//                    static int lRxCmdTotalCnt = 0;
+//                    ++lRxCmdTotalCnt;
+
+
+//                    char lStr[256];
+//                    memset(lStr,0,sizeof(lStr));
+//                    sprintf(lStr,"Order:%d | Total:%8d",lRxCmdPrintCnt++,lRxCmdTotalCnt);
+
+//                    memset(lRxCmd,0,sizeof(lRxCmd));
+//                }
+
+//            }
+//        }
+
 
 
 
@@ -159,7 +211,8 @@ void MainWindow::readMyCom() //读串口函数
 //            lStrBuf_addr=0;
 //        }
 
-//    }
+    }
+    ui->textBrowser->append(QString("lRxCmdCnt:%1  rx_DataSave_addr:%2").arg(lRxCmdCnt).arg(rx_DataSave_addr));
 }
 void MainWindow::on_openMyComBtn_clicked()
 {

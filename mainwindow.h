@@ -4,6 +4,9 @@
 #include <QMainWindow>
 #include "win_qextserialport.h"
 #include <QTimer>
+#include <string.h>
+
+#define RX_BIG_BUFFER_SIZE 1024*1024*64
 
 namespace Ui {
     class MainWindow;
@@ -23,6 +26,9 @@ private:
     QString  _ParamsFileName;
     QTimer  _DisplayTimer;
     bool    _ComIsOpen;
+    unsigned char  *_RxBigBuffer;
+    int    _RxBigBufferWriteAddr;
+    int    _RxBigBufferReadAddr;
 private slots:
     void on_ChooseFileBtn_clicked();
     void on_CleanRightScreamBtn_clicked();
