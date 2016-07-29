@@ -24,7 +24,16 @@
      </rect>
     </property>
     <property name="frameShape">
-     <enum>QFrame::Panel</enum>
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="lineWidth">
+     <number>2</number>
+    </property>
+    <property name="midLineWidth">
+     <number>0</number>
     </property>
    </widget>
    <widget class="QPushButton" name="sendMsgBtn">
@@ -316,6 +325,76 @@
        <string>COM16</string>
       </property>
      </item>
+     <item>
+      <property name="text">
+       <string>COM17</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>COM18</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>COM19</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>COM20</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>COM21</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>COM22</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>COM23</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>COM24</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>COM25</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>COM26</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>COM27</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>COM28</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>COM29</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>COM30</string>
+      </property>
+     </item>
     </widget>
     <widget class="QPushButton" name="openMyComBtn">
      <property name="geometry">
@@ -546,46 +625,23 @@
      </property>
     </widget>
    </widget>
-   <widget class="QLabel" name="label_6">
+   <widget class="QPushButton" name="CleanLeftScreamBtn">
     <property name="geometry">
      <rect>
-      <x>50</x>
-      <y>360</y>
-      <width>111</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>文件名及路径：</string>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="FileName_lineEdit">
-    <property name="geometry">
-     <rect>
-      <x>170</x>
-      <y>350</y>
-      <width>421</width>
-      <height>31</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="CleanScreamBtn">
-    <property name="geometry">
-     <rect>
-      <x>1120</x>
+      <x>1070</x>
       <y>360</y>
       <width>93</width>
       <height>28</height>
      </rect>
     </property>
     <property name="text">
-     <string>清屏</string>
+     <string>清左屏</string>
     </property>
    </widget>
    <widget class="QPushButton" name="testBtn">
     <property name="geometry">
      <rect>
-      <x>1010</x>
+      <x>950</x>
       <y>360</y>
       <width>93</width>
       <height>28</height>
@@ -598,10 +654,10 @@
    <widget class="QPushButton" name="ReadFileBtn">
     <property name="geometry">
      <rect>
-      <x>600</x>
+      <x>110</x>
       <y>350</y>
       <width>93</width>
-      <height>28</height>
+      <height>31</height>
      </rect>
     </property>
     <property name="text">
@@ -616,6 +672,64 @@
       <width>661</width>
       <height>331</height>
      </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="lineWidth">
+     <number>2</number>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="CleanRightScreamBtn">
+    <property name="geometry">
+     <rect>
+      <x>1170</x>
+      <y>360</y>
+      <width>93</width>
+      <height>28</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>清右屏</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="ChooseFileBtn">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>350</y>
+      <width>81</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>选择文件</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="IMU_ID_lineEdit">
+    <property name="geometry">
+     <rect>
+      <x>1140</x>
+      <y>430</y>
+      <width>111</width>
+      <height>20</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_6">
+    <property name="geometry">
+     <rect>
+      <x>1050</x>
+      <y>430</y>
+      <width>54</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>IMU ID:</string>
     </property>
    </widget>
   </widget>
