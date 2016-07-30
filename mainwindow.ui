@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1280</width>
-    <height>768</height>
+    <width>960</width>
+    <height>706</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,7 +19,7 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>581</width>
+      <width>461</width>
       <height>331</height>
      </rect>
     </property>
@@ -39,8 +39,8 @@
    <widget class="QPushButton" name="sendMsgBtn">
     <property name="geometry">
      <rect>
-      <x>490</x>
-      <y>460</y>
+      <x>370</x>
+      <y>350</y>
       <width>93</width>
       <height>28</height>
      </rect>
@@ -52,8 +52,8 @@
    <widget class="QLineEdit" name="sendMsgLineEdit">
     <property name="geometry">
      <rect>
-      <x>790</x>
-      <y>650</y>
+      <x>480</x>
+      <y>530</y>
       <width>211</width>
       <height>41</height>
      </rect>
@@ -62,10 +62,10 @@
    <widget class="QGroupBox" name="groupBox">
     <property name="geometry">
      <rect>
-      <x>1030</x>
-      <y>460</y>
+      <x>710</x>
+      <y>390</y>
       <width>241</width>
-      <height>221</height>
+      <height>251</height>
      </rect>
     </property>
     <property name="title">
@@ -217,6 +217,11 @@
      </property>
      <item>
       <property name="text">
+       <string>115200</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
        <string>9600</string>
       </property>
      </item>
@@ -228,11 +233,6 @@
      <item>
       <property name="text">
        <string>57600</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>115200</string>
       </property>
      </item>
     </widget>
@@ -422,12 +422,35 @@
       <string>关闭串口</string>
      </property>
     </widget>
+    <widget class="QLabel" name="label_6">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>220</y>
+       <width>54</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>IMU ID:</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="IMU_ID_lineEdit">
+     <property name="geometry">
+      <rect>
+       <x>110</x>
+       <y>220</y>
+       <width>111</width>
+       <height>20</height>
+      </rect>
+     </property>
+    </widget>
    </widget>
    <widget class="QPushButton" name="TranBtn">
     <property name="geometry">
      <rect>
-      <x>730</x>
-      <y>500</y>
+      <x>600</x>
+      <y>470</y>
       <width>93</width>
       <height>28</height>
      </rect>
@@ -436,41 +459,11 @@
      <string>转换</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="lineEdit">
-    <property name="geometry">
-     <rect>
-      <x>630</x>
-      <y>460</y>
-      <width>111</width>
-      <height>31</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="lineEdit_2">
-    <property name="geometry">
-     <rect>
-      <x>760</x>
-      <y>460</y>
-      <width>111</width>
-      <height>31</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="lineEdit_3">
-    <property name="geometry">
-     <rect>
-      <x>890</x>
-      <y>460</y>
-      <width>111</width>
-      <height>31</height>
-     </rect>
-    </property>
-   </widget>
    <widget class="QGroupBox" name="groupBox_2">
     <property name="geometry">
      <rect>
-      <x>60</x>
-      <y>470</y>
+      <x>20</x>
+      <y>390</y>
       <width>421</width>
       <height>181</height>
      </rect>
@@ -628,8 +621,8 @@
    <widget class="QPushButton" name="CleanLeftScreamBtn">
     <property name="geometry">
      <rect>
-      <x>1070</x>
-      <y>360</y>
+      <x>750</x>
+      <y>350</y>
       <width>93</width>
       <height>28</height>
      </rect>
@@ -641,8 +634,8 @@
    <widget class="QPushButton" name="testBtn">
     <property name="geometry">
      <rect>
-      <x>950</x>
-      <y>360</y>
+      <x>640</x>
+      <y>350</y>
       <width>93</width>
       <height>28</height>
      </rect>
@@ -667,9 +660,9 @@
    <widget class="QTextBrowser" name="textBrowser_2">
     <property name="geometry">
      <rect>
-      <x>610</x>
+      <x>490</x>
       <y>10</y>
-      <width>661</width>
+      <width>461</width>
       <height>331</height>
      </rect>
     </property>
@@ -686,8 +679,8 @@
    <widget class="QPushButton" name="CleanRightScreamBtn">
     <property name="geometry">
      <rect>
-      <x>1170</x>
-      <y>360</y>
+      <x>860</x>
+      <y>350</y>
       <width>93</width>
       <height>28</height>
      </rect>
@@ -709,37 +702,14 @@
      <string>选择文件</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="IMU_ID_lineEdit">
-    <property name="geometry">
-     <rect>
-      <x>1140</x>
-      <y>430</y>
-      <width>111</width>
-      <height>20</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_6">
-    <property name="geometry">
-     <rect>
-      <x>1050</x>
-      <y>430</y>
-      <width>54</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>IMU ID:</string>
-    </property>
-   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1280</width>
-     <height>23</height>
+     <width>960</width>
+     <height>25</height>
     </rect>
    </property>
   </widget>

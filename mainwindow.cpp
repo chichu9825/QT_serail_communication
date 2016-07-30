@@ -18,7 +18,7 @@
 
 
 
-char rx_lData[RX_BUF_SIZE];
+char rx_buf[128];
 char rx_DataSave[RX_BUF_SIZE];
 int  rx_DataSave_addr=0;
 char lStrBuf[STR_BUF_SIZE];
@@ -32,9 +32,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    _RxBigBuffer = (unsigned char *)malloc(RX_BIG_BUFFER_SIZE);
+    _RxBigBuffer = new unsigned char[1024];//(RX_BIG_BUFFER_SIZE);
     _RxBigBufferWriteAddr = 0;
 
+	if(!com_fifo_init(&rx_fifo)){
+		ui->textBrowser->append("Com Fifo init failed!");
+	}
     memset(lStrBuf,0,STR_BUF_SIZE);
     _ComIsOpen = false;
     _DisplayTimer.setInterval(1000);
@@ -133,86 +136,123 @@ void MainWindow::readMyCom() //读串口函数
     static QByteArray gRecData="";
     static char lRxCmd[64];
     static int lRxCmdCnt=0;
+	static int lGetCmdOrder = 0;
 //    QByteArray temp = myCom->readAll();
 ////    //读取串口缓冲区的所有数据给临时变量temp
-//    char *rx_lData = temp.data();
-    memset(rx_lData,0,RX_BUF_SIZE);
-    int lCnt = myCom->read(rx_lData,RX_BUF_SIZE);
 
-    ui->textBrowser->append(QString("lCnt:%1").arg(lCnt));
+	memset(rx_buf,0,RX_BUF_SIZE);
+	int lCnt = myCom->read(rx_buf,RX_BUF_SIZE);
 
-    if(lCnt>0){
-        memcpy(rx_DataSave+rx_DataSave_addr,rx_lData,lCnt);
-        rx_DataSave_addr += lCnt;
-        int lCmdReadAddr = 0;
-        if( rx_DataSave_addr> 1024 ){
+	if(lCnt>0){
+		ui->textBrowser->append(QString("lCnt:%1").arg(lCnt));
+		com_fifo_write(&rx_fifo,rx_buf,lCnt);
+		memset(rx_buf,0,16);
+//		com_fifo_read(&rx_fifo,rx_buf,lCnt);
+//		ui->textBrowser->append(QString("%1").arg(rx_buf));
+		char lTmpChar = rx_buf[0];
+		while(rx_fifo.total>0){
 
-            for(int i=0;i<(rx_DataSave_addr-SUNCO_RX_CMD_SIZE-1);i++){
+			if(0==lGetCmdOrder){
+				com_fifo_read(&rx_fifo,rx_buf,1);
+				lTmpChar = rx_buf[0];
+				if( 0xFF == (unsigned char)rx_buf[0] ){
+					lGetCmdOrder = 1;
+				}
+			}else if(1==lGetCmdOrder){
+				com_fifo_read(&rx_fifo,rx_buf,1);
+				if( 0x8A == (unsigned char)rx_buf[0] ){
+					lGetCmdOrder = 2;
+				}
+			}else if(2==lGetCmdOrder){
+				if(rx_fifo.total>=6){
+					lGetCmdOrder = 0;
+					memset(rx_buf,0,64);
+					rx_buf[0] = 0xFF;
+					rx_buf[1] = 0x8A;
+					com_fifo_read(&rx_fifo,rx_buf+2,6);
+					ui->textBrowser_2->append(QString("%1,%2,%3,%4,%5,%6,%7,%8").arg((int)rx_buf[0]).arg((int)rx_buf[1]).arg((int)rx_buf[2]).arg((int)rx_buf[3]).arg((int)rx_buf[4]).arg((int)rx_buf[5]).arg((int)rx_buf[6]).arg((int)rx_buf[7]));
+					if(1){
+						if( 0x0A == (unsigned char)rx_buf[7] ){
+							lRxCmdCnt++;
+						}
 
-                if( ((unsigned char)rx_DataSave[i]==0xFF)
-                                        ||((unsigned char)rx_DataSave[i+1]==0x8A)  ){
+					}
+//					if(rx_filter(lRxCmd,rx_DataSave,SUNCO_RX_CMD_SIZE)){
+//						lRxCmdCnt++;
+//					}
+				}else{
+					break;
+				}
+			}
 
+		}
+		ui->textBrowser->append(QString("Total:%1,WriteAddr:%2,ReadAddr:%3,lRxCmdCnt:%4").arg(rx_fifo.total).arg(rx_fifo.WriteAddr).arg(rx_fifo.ReadAddr).arg(lRxCmdCnt));
 
-                    if(rx_filter(lRxCmd,rx_DataSave,SUNCO_RX_CMD_SIZE)){
-                        lRxCmdCnt++;
-                    }
-                    lCmdReadAddr += SUNCO_RX_CMD_SIZE;
-                }else{
-                    ++lCmdReadAddr;
-                }
-            }
-        }
-        char lTmp[1024*16];
-        memcpy(lTmp,rx_DataSave+lCmdReadAddr,rx_DataSave_addr-lCmdReadAddr);
-        memcpy(rx_DataSave,lTmp,rx_DataSave_addr-lCmdReadAddr);
-        rx_DataSave_addr = rx_DataSave_addr-lCmdReadAddr;
-//        if( (_RxBigBufferWriteAddr+lCnt )< RX_BIG_BUFFER_SIZE ){
-//            memcpy(_RxBigBuffer+_RxBigBufferWriteAddr,rx_lData,lCnt);
-//            _RxBigBufferWriteAddr += lCnt;
-//        }
+//		next:
 
-//        for(int i=0;i<( _RxBigBufferWriteAddr-_RxBigBufferReadAddr-SUNCO_RX_CMD_SIZE );i++){
-//        }
+//            for(int i=0;i<(rx_DataSave_addr-SUNCO_RX_CMD_SIZE-1);i++){
 
-//        int lInputFilterAddr = 0;
-//        while( lCnt > lInputFilterAddr ){
-
-//            if((lCnt-lInputFilterAddr)>SUNCO_RX_CMD_SIZE){
-//                if(rx_filter(lRxCmd,lData,lCnt)){
-
-//                    static int lRxCmdPrintCnt = 0;
-//                    static int lRxCmdTotalCnt = 0;
-//                    ++lRxCmdTotalCnt;
-
-
-//                    char lStr[256];
-//                    memset(lStr,0,sizeof(lStr));
-//                    sprintf(lStr,"Order:%d | Total:%8d",lRxCmdPrintCnt++,lRxCmdTotalCnt);
-
-//                    memset(lRxCmd,0,sizeof(lRxCmd));
-//                }
-
-//            }
-//        }
+//                if( ((unsigned char)rx_DataSave[i]==0xFF)
+//                                        ||((unsigned char)rx_DataSave[i+1]==0x8A)  ){
 
 
+//                    if(rx_filter(lRxCmd,rx_DataSave,SUNCO_RX_CMD_SIZE)){
+//                        lRxCmdCnt++;
+//                    }
+//                    lCmdReadAddr += SUNCO_RX_CMD_SIZE;
+//                }else{
+//                    ++lCmdReadAddr;
+
+//        char lTmp[1024*16];
+//        memcpy(lTmp,rx_DataSave+lCmdReadAddr,rx_DataSave_addr-lCmdReadAddr);
+//        memcpy(rx_DataSave,lTmp,rx_DataSave_addr-lCmdReadAddr);
+//        rx_DataSave_addr = rx_DataSave_addr-lCmdReadAddr;
+////        if( (_RxBigBufferWriteAddr+lCnt )< RX_BIG_BUFFER_SIZE ){
+////            memcpy(_RxBigBuffer+_RxBigBufferWriteAddr,rx_buf,lCnt);
+////            _RxBigBufferWriteAddr += lCnt;
+////        }
+
+////        for(int i=0;i<( _RxBigBufferWriteAddr-_RxBigBufferReadAddr-SUNCO_RX_CMD_SIZE );i++){
+////        }
+
+////        int lInputFilterAddr = 0;
+////        while( lCnt > lInputFilterAddr ){
+
+////            if((lCnt-lInputFilterAddr)>SUNCO_RX_CMD_SIZE){
+////                if(rx_filter(lRxCmd,lData,lCnt)){
+
+////                    static int lRxCmdPrintCnt = 0;
+////                    static int lRxCmdTotalCnt = 0;
+////                    ++lRxCmdTotalCnt;
+
+
+////                    char lStr[256];
+////                    memset(lStr,0,sizeof(lStr));
+////                    sprintf(lStr,"Order:%d | Total:%8d",lRxCmdPrintCnt++,lRxCmdTotalCnt);
+
+////                    memset(lRxCmd,0,sizeof(lRxCmd));
+////                }
+
+////            }
+////        }
 
 
 
 
-////        sprintf(lStrBuf,"%d>>%d:%x,%x,%x\r\n",SentOrder++,lCnt,*(int *)lData,*(int *)(lData+4),*(int *)(lData+8));
-////        memcpy(lStrBuf+lStrBuf_addr,lData,lCnt);
-//        gRecData.append(lData);
-//        lStrBuf_addr += lCnt;
-////        ui->textBrowser->insertPlainText(lStrBuf);
-//        if(lStrBuf_addr>100000){
-//            ui->textBrowser->setText(gRecData);
-////            ui->textBrowser->moveCursor(QTextCursor::End);
-//            lStrBuf_addr=0;
-//        }
 
-    }
-    ui->textBrowser->append(QString("lRxCmdCnt:%1  rx_DataSave_addr:%2").arg(lRxCmdCnt).arg(rx_DataSave_addr));
+
+//////        sprintf(lStrBuf,"%d>>%d:%x,%x,%x\r\n",SentOrder++,lCnt,*(int *)lData,*(int *)(lData+4),*(int *)(lData+8));
+//////        memcpy(lStrBuf+lStrBuf_addr,lData,lCnt);
+////        gRecData.append(lData);
+////        lStrBuf_addr += lCnt;
+//////        ui->textBrowser->insertPlainText(lStrBuf);
+////        if(lStrBuf_addr>100000){
+////            ui->textBrowser->setText(gRecData);
+//////            ui->textBrowser->moveCursor(QTextCursor::End);
+////            lStrBuf_addr=0;
+////        }
+
+	}
 }
 void MainWindow::on_openMyComBtn_clicked()
 {

@@ -5,7 +5,7 @@
 #include "win_qextserialport.h"
 #include <QTimer>
 #include <string.h>
-
+#include "com_fifo.h"
 #define RX_BIG_BUFFER_SIZE 1024*1024*64
 
 namespace Ui {
@@ -29,6 +29,7 @@ private:
     unsigned char  *_RxBigBuffer;
     int    _RxBigBufferWriteAddr;
     int    _RxBigBufferReadAddr;
+    COM_FIFO_TYPE   rx_fifo;
 private slots:
     void on_ChooseFileBtn_clicked();
     void on_CleanRightScreamBtn_clicked();
