@@ -40,19 +40,30 @@ MainWindow::MainWindow(QWidget *parent) :
 	}
     memset(lStrBuf,0,STR_BUF_SIZE);
     _ComIsOpen = false;
-    _DisplayTimer.setInterval(1000);
+	_bStartSample = false;
+	ui->StartSampleBtn->setEnabled(false);
+	ui->StopSampleBtn->setEnabled(false);
+
+	_DisplayTimer.setInterval(100);
     _DisplayTimer.start();
     connect(&_DisplayTimer,SIGNAL(timeout()),this,SLOT(DisplayTimeout()));
 
     setWindowTitle("IMU Calibration Tool");
+	ui->openMyComBtn->setEnabled(false);
     ui->closeMyComBtn->setEnabled(false); //开始“关闭串口”按钮不可用
     ui->sendMsgBtn->setEnabled(false); //开始“发送数据”按钮不可用
     this->setStyleSheet("background-color:rgb(200,200,200)");
-    ui->groupBox_2->setStyleSheet("color:black");
-    ui->groupBox_2->setStyleSheet("background-color:rgb(200,200,200)");
+//	ui->AccelGpBox->setStyleSheet("background-color:rgb(200,200,200)");
+//	ui->GyroGpBox->setStyleSheet("background-color:rgb(200,200,200)");
     ui->textBrowser->setStyleSheet("background-color:rgb(240,240,240)");
-    ui->textBrowser_2->setStyleSheet("background-color:rgb(240,240,240)");
+
     ui->IMU_ID_lineEdit->setStyleSheet("background-color:rgb(240,240,240)");
+	ui->SampleTotal_lineEdit->setStyleSheet("background-color:rgb(240,240,240)");
+	ui->SampleGpBox->setStyleSheet("background-color:rgb(255,128,0)");
+	ui->TotalCmd_label->setText("总数：");
+	//------------------------------------------------------------------------
+	SetTableView();
+
 }
 char tmp;
 MainWindow::~MainWindow()
@@ -128,33 +139,82 @@ void MainWindow::DisplayTimeout()
 //    ui->textBrowser->append("Hello");
 }
 
+void MainWindow::SetTableView()
+{
+	_pTableView = new QStandardItemModel();
+	_pTableView->setColumnCount(6);
+	_pTableView->setHeaderData(0,Qt::Horizontal,QString::fromLocal8Bit("Name"));
+	_pTableView->setHeaderData(1,Qt::Horizontal,QString::fromLocal8Bit("CurVal"));
+	_pTableView->setHeaderData(2,Qt::Horizontal,QString::fromLocal8Bit("MaxVal"));
+	_pTableView->setHeaderData(3,Qt::Horizontal,QString::fromLocal8Bit("MinVal"));
+	_pTableView->setHeaderData(4,Qt::Horizontal,QString::fromLocal8Bit("AvgVal"));
+	_pTableView->setHeaderData(5,Qt::Horizontal,QString::fromLocal8Bit("Temp"));
 
+	_pTableView->horizontalHeaderItem(0)->setTextAlignment(Qt::AlignCenter);
+	_pTableView->horizontalHeaderItem(1)->setTextAlignment(Qt::AlignCenter);
+	_pTableView->horizontalHeaderItem(2)->setTextAlignment(Qt::AlignCenter);
+	_pTableView->horizontalHeaderItem(3)->setTextAlignment(Qt::AlignCenter);
+	_pTableView->horizontalHeaderItem(4)->setTextAlignment(Qt::AlignCenter);
+	_pTableView->horizontalHeaderItem(5)->setTextAlignment(Qt::AlignCenter);
+	ui->tableView->setModel(_pTableView);
+	//表头信息显示居左
+	ui->tableView->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
+	//设置列宽不可变
+	ui->tableView->horizontalHeader()->setResizeMode(0,QHeaderView::Fixed);
+	ui->tableView->horizontalHeader()->setResizeMode(1,QHeaderView::Fixed);
+	ui->tableView->horizontalHeader()->setResizeMode(2,QHeaderView::Fixed);
+	ui->tableView->horizontalHeader()->setResizeMode(3,QHeaderView::Fixed);
+	ui->tableView->horizontalHeader()->setResizeMode(4,QHeaderView::Fixed);
+	ui->tableView->horizontalHeader()->setResizeMode(5,QHeaderView::Fixed);
+	ui->tableView->setColumnWidth(0,90);
+	ui->tableView->setColumnWidth(1,105);
+	ui->tableView->setColumnWidth(2,105);
+	ui->tableView->setColumnWidth(3,105);
+	ui->tableView->setColumnWidth(4,105);
+	ui->tableView->setColumnWidth(5,105);
+
+	_pTableView->setItem(0,0,new QStandardItem("AccelX"));
+	_pTableView->setItem(1,0,new QStandardItem("AccelY"));
+	_pTableView->setItem(2,0,new QStandardItem("AccelZ"));
+	_pTableView->setItem(3,0,new QStandardItem("GyroX"));
+	_pTableView->setItem(4,0,new QStandardItem("GyroY"));
+	_pTableView->setItem(5,0,new QStandardItem("GyroZ"));
+	_pTableView->setItem(5,0,new QStandardItem("Baro"));
+
+
+}
 
 int  SentOrder = 0;
 void MainWindow::readMyCom() //读串口函数
 {
+	if(!_bStartSample){
+		return;
+	}
+
     static QByteArray gRecData="";
-    static char lRxCmd[64];
+//    static char lRxCmd[64];
     static int lRxCmdCnt=0;
 	static int lGetCmdOrder = 0;
-//    QByteArray temp = myCom->readAll();
-////    //读取串口缓冲区的所有数据给临时变量temp
-
+	static int lRxTotal = 0;
+	QString lDataStr4File;
+	if( lRxCmdCnt >= ui->SampleTotal_lineEdit->text().toInt() ){
+		MainWindow::on_StopSampleBtn_clicked();
+		ui->textBrowser->append("Have receive enough data . Stop Sample !");
+	}
 	memset(rx_buf,0,RX_BUF_SIZE);
 	int lCnt = myCom->read(rx_buf,RX_BUF_SIZE);
 
 	if(lCnt>0){
-		ui->textBrowser->append(QString("lCnt:%1").arg(lCnt));
+		lRxTotal += lCnt;
+		ui->textBrowser->append(QString("lCnt:%1,lRxTotal:%2 = CMD:%3").arg(lCnt).arg(lRxTotal).arg(lRxTotal/42));
 		com_fifo_write(&rx_fifo,rx_buf,lCnt);
 		memset(rx_buf,0,16);
-//		com_fifo_read(&rx_fifo,rx_buf,lCnt);
-//		ui->textBrowser->append(QString("%1").arg(rx_buf));
-		char lTmpChar = rx_buf[0];
+
+
 		while(rx_fifo.total>0){
 
 			if(0==lGetCmdOrder){
 				com_fifo_read(&rx_fifo,rx_buf,1);
-				lTmpChar = rx_buf[0];
 				if( 0xFF == (unsigned char)rx_buf[0] ){
 					lGetCmdOrder = 1;
 				}
@@ -164,93 +224,49 @@ void MainWindow::readMyCom() //读串口函数
 					lGetCmdOrder = 2;
 				}
 			}else if(2==lGetCmdOrder){
-				if(rx_fifo.total>=6){
+				if(rx_fifo.total>=40){
 					lGetCmdOrder = 0;
-					memset(rx_buf,0,64);
 					rx_buf[0] = 0xFF;
 					rx_buf[1] = 0x8A;
-					com_fifo_read(&rx_fifo,rx_buf+2,6);
-					ui->textBrowser_2->append(QString("%1,%2,%3,%4,%5,%6,%7,%8").arg((int)rx_buf[0]).arg((int)rx_buf[1]).arg((int)rx_buf[2]).arg((int)rx_buf[3]).arg((int)rx_buf[4]).arg((int)rx_buf[5]).arg((int)rx_buf[6]).arg((int)rx_buf[7]));
-					if(1){
-						if( 0x0A == (unsigned char)rx_buf[7] ){
-							lRxCmdCnt++;
-						}
+					com_fifo_read(&rx_fifo,rx_buf+2,40);
 
+					if( 0x0A == (unsigned char)rx_buf[41] ){
+						TYPE_sensors_data_t *lpDataFrame = (TYPE_sensors_data_t *)rx_buf;
+
+						lRxCmdCnt++;
+						ui->TotalCmd_label->setText("总数："+QString("%1").arg(lRxCmdCnt));
+						lDataStr4File += QString("%1,%2,%3,%4,%5,%6,%7,%8,\r\n")
+										 .arg(lRxCmdCnt).arg(lpDataFrame->uid)
+										 .arg(lpDataFrame->accel_x)
+										 .arg(lpDataFrame->accel_y)
+										 .arg(lpDataFrame->accel_z)
+										 .arg(lpDataFrame->gyro_x)
+										 .arg(lpDataFrame->gyro_y)
+										 .arg(lpDataFrame->gyro_z)
+										 .arg(lpDataFrame->baro);
+						//---------------------------------------------------
+						_pTableView->setItem(0,1,new QStandardItem("AccelX"));
+						_pTableView->setItem(1,1,new QStandardItem("AccelY"));
+						_pTableView->setItem(2,1,new QStandardItem("AccelZ"));
+						_pTableView->setItem(3,1,new QStandardItem("GyroX"));
+						_pTableView->setItem(4,1,new QStandardItem("GyroY"));
+						_pTableView->setItem(5,1,new QStandardItem("GyroZ"));
+						_pTableView->setItem(5,1,new QStandardItem("Baro"));
 					}
-//					if(rx_filter(lRxCmd,rx_DataSave,SUNCO_RX_CMD_SIZE)){
-//						lRxCmdCnt++;
-//					}
+
 				}else{
 					break;
 				}
 			}
 
 		}
+//		ui->textBrowser_2->append(lDataStr4File);
+
+
+		QTextStream out(_pDataStorageFile);
+		out<<lDataStr4File;
+		out.flush();
 		ui->textBrowser->append(QString("Total:%1,WriteAddr:%2,ReadAddr:%3,lRxCmdCnt:%4").arg(rx_fifo.total).arg(rx_fifo.WriteAddr).arg(rx_fifo.ReadAddr).arg(lRxCmdCnt));
-
-//		next:
-
-//            for(int i=0;i<(rx_DataSave_addr-SUNCO_RX_CMD_SIZE-1);i++){
-
-//                if( ((unsigned char)rx_DataSave[i]==0xFF)
-//                                        ||((unsigned char)rx_DataSave[i+1]==0x8A)  ){
-
-
-//                    if(rx_filter(lRxCmd,rx_DataSave,SUNCO_RX_CMD_SIZE)){
-//                        lRxCmdCnt++;
-//                    }
-//                    lCmdReadAddr += SUNCO_RX_CMD_SIZE;
-//                }else{
-//                    ++lCmdReadAddr;
-
-//        char lTmp[1024*16];
-//        memcpy(lTmp,rx_DataSave+lCmdReadAddr,rx_DataSave_addr-lCmdReadAddr);
-//        memcpy(rx_DataSave,lTmp,rx_DataSave_addr-lCmdReadAddr);
-//        rx_DataSave_addr = rx_DataSave_addr-lCmdReadAddr;
-////        if( (_RxBigBufferWriteAddr+lCnt )< RX_BIG_BUFFER_SIZE ){
-////            memcpy(_RxBigBuffer+_RxBigBufferWriteAddr,rx_buf,lCnt);
-////            _RxBigBufferWriteAddr += lCnt;
-////        }
-
-////        for(int i=0;i<( _RxBigBufferWriteAddr-_RxBigBufferReadAddr-SUNCO_RX_CMD_SIZE );i++){
-////        }
-
-////        int lInputFilterAddr = 0;
-////        while( lCnt > lInputFilterAddr ){
-
-////            if((lCnt-lInputFilterAddr)>SUNCO_RX_CMD_SIZE){
-////                if(rx_filter(lRxCmd,lData,lCnt)){
-
-////                    static int lRxCmdPrintCnt = 0;
-////                    static int lRxCmdTotalCnt = 0;
-////                    ++lRxCmdTotalCnt;
-
-
-////                    char lStr[256];
-////                    memset(lStr,0,sizeof(lStr));
-////                    sprintf(lStr,"Order:%d | Total:%8d",lRxCmdPrintCnt++,lRxCmdTotalCnt);
-
-////                    memset(lRxCmd,0,sizeof(lRxCmd));
-////                }
-
-////            }
-////        }
-
-
-
-
-
-
-//////        sprintf(lStrBuf,"%d>>%d:%x,%x,%x\r\n",SentOrder++,lCnt,*(int *)lData,*(int *)(lData+4),*(int *)(lData+8));
-//////        memcpy(lStrBuf+lStrBuf_addr,lData,lCnt);
-////        gRecData.append(lData);
-////        lStrBuf_addr += lCnt;
-//////        ui->textBrowser->insertPlainText(lStrBuf);
-////        if(lStrBuf_addr>100000){
-////            ui->textBrowser->setText(gRecData);
-//////            ui->textBrowser->moveCursor(QTextCursor::End);
-////            lStrBuf_addr=0;
-////        }
 
 	}
 }
@@ -300,6 +316,13 @@ void MainWindow::on_openMyComBtn_clicked()
     ui->portNameComboBox->setEnabled(false);
 
     _ComIsOpen = true;
+
+
+	if(!_pDataStorageFile->open(QIODevice::WriteOnly|QIODevice::Text)){
+		ui->textBrowser->insertPlainText(_DataStorageFileName);
+		ui->textBrowser->insertPlainText("File Open failed!\r\n");
+	}
+
 }
 void MainWindow::on_closeMyComBtn_clicked()
 {
@@ -313,11 +336,11 @@ void MainWindow::on_closeMyComBtn_clicked()
     ui->parityComboBox->setEnabled(true);
     ui->stopBitsComboBox->setEnabled(true);
     ui->portNameComboBox->setEnabled(true);
+	_pDataStorageFile->close();
 }
 
 void MainWindow::on_sendMsgBtn_clicked()
 {
-//    myCom->write(ui->sendMsgLineEdit->text().toAscii());
 
     char lSentData[64];
     lSentData[0] = 0xAE;
@@ -393,13 +416,10 @@ void MainWindow::on_TranBtn_clicked()
 void MainWindow::on_CleanLeftScreamBtn_clicked()
 {
     ui->textBrowser->clear();
+//	ui->tableView->
+
 }
 
-void MainWindow::on_testBtn_clicked()
-{
-    ui->textBrowser->insertPlainText("111111111111111111111111\r\n");
-    ui->textBrowser_2->insertPlainText("111111111111111111111111\r\n");
-}
 
 float lFileData[8][3];
 
@@ -423,46 +443,55 @@ void MainWindow::on_ReadFileBtn_clicked()
             lFileData[i][1] = lStrValue.toFloat();
             lStrValue = lStrlist.at(2);
             lFileData[i][2] = lStrValue.toFloat();
-            ui->textBrowser->append(QString(" Order=%1: %2 | %3 | %4 ").arg(i).arg(lFileData[i][0]).arg(lFileData[i][1]).arg(lFileData[i][2]));
-//            ui->textBrowser->insertPlainText(lStrlist.at(0));
-//            ui->textBrowser->insertPlainText(lStrlist.at(1));
-//            ui->textBrowser->insertPlainText(lStrlist.at(2));
-//            for(int j=0;j<3;j++){
-//                lStrValue = lStrlist.at(i);
-////                lFileData[i][j] = lStrValue.toFloat();
-////                ui->textBrowser->insertPlainText(QString(" A: %1 ").arg(lFileData[i][j]));
-//                  ui->textBrowser->insertPlainText(lStrValue);
-//            }
-//            ui->textBrowser->insertPlainText("\r\n");
+			ui->textBrowser->append(QString(" Order=%1: %2 | %3 | %4 ")
+									.arg(i).arg(lFileData[i][0])
+									.arg(lFileData[i][1])
+									.arg(lFileData[i][2]));
         }
-
-
-
-
-
-
-
-
-//        ui->textBrowser->insertPlainText(lReadBuf);
-//        ui->textBrowser->insertPlainText(lStrlist.at(0));
-
-//        lReadBuf = file.readLine(256);
-//        ui->textBrowser->insertPlainText(lReadBuf);
-
     }else{
         ui->textBrowser->insertPlainText(_ParamsFileName);
          ui->textBrowser->insertPlainText("File Open failed!\r\n");
     }
-    file.close();
+	file.close();
 }
 
-void MainWindow::on_CleanRightScreamBtn_clicked()
-{
-        ui->textBrowser_2->clear();
-}
 
 void MainWindow::on_ChooseFileBtn_clicked()
 {
     _ParamsFileName = QFileDialog::getOpenFileName(this,tr("open file"),"",tr("Allfile(*.*);;datFile(*.dat)"));
-    ui->textBrowser_2->append(_ParamsFileName);
+	ui->textBrowser->append(_ParamsFileName);
+}
+
+void MainWindow::on_ChooseSaveFilePathBtn_clicked()
+{
+	_DataStorageFileName = QFileDialog::getSaveFileName(this, tr("Save File"),
+												   "untitled.dat",
+												   tr("Data (*.dat);;CSV (*.csv)"));
+	ui->textBrowser->append(_DataStorageFileName);
+	_pDataStorageFile = new QFile(_DataStorageFileName);
+	ui->openMyComBtn->setEnabled(true);
+	ui->StartSampleBtn->setEnabled(true);
+}
+
+
+void MainWindow::on_StartSampleBtn_clicked()
+{
+	if(ui->SampleTotal_lineEdit->text().toInt()<1){
+		ui->textBrowser->append("请设置采样数！");
+		return;
+	}
+	_bStartSample = true;
+	ui->StartSampleBtn->setEnabled(false);
+	ui->StopSampleBtn->setEnabled(true);
+	ui->SampleTotal_lineEdit->setEnabled(false);
+	ui->SampleGpBox->setStyleSheet("background-color:rgb(0,255,0)");
+}
+
+void MainWindow::on_StopSampleBtn_clicked()
+{
+	_bStartSample = false;
+	ui->StartSampleBtn->setEnabled(true);
+	ui->StopSampleBtn->setEnabled(false);
+	ui->SampleTotal_lineEdit->setEnabled(true);
+	ui->SampleGpBox->setStyleSheet("background-color:rgb(255,0,0)");
 }
