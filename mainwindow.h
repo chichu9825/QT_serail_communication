@@ -5,6 +5,7 @@
 #include "win_qextserialport.h"
 #include <QTimer>
 #include <string.h>
+#include <QtCore/qmath.h>
 #include <QTreeView>
 #include <QStandardItemModel>
 //---------------------------------------------
@@ -56,6 +57,7 @@ private slots:
     void readMyCom();
 	void SetTableView();
     void DisplayTimeout();
+	void SampleInit();
 };
 
 #endif // MAINWINDOW_H

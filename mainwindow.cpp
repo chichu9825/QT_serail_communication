@@ -24,8 +24,38 @@ int  rx_DataSave_addr=0;
 char lStrBuf[STR_BUF_SIZE];
 int  lStrBuf_addr=0;
 
+static TYPE_INT_DATA_AVG_MAX_MIN lAccelValueX;
+static TYPE_INT_DATA_AVG_MAX_MIN lAccelValueY;
+static TYPE_INT_DATA_AVG_MAX_MIN lAccelValueZ;
+static TYPE_INT_DATA_AVG_MAX_MIN lGyroValueX;
+static TYPE_INT_DATA_AVG_MAX_MIN lGyroValueY;
+static TYPE_INT_DATA_AVG_MAX_MIN lGyroValueZ;
 
+static int lRxCmdCnt=0;
+static int lGetCmdOrder = 0;
+static int lRxTotal = 0;
 
+void MainWindow::SampleInit()
+{
+	lRxCmdCnt=0;
+	lGetCmdOrder = 0;
+	lRxTotal = 0;
+
+	lAccelValueX.cnt=0;
+	lAccelValueY.cnt=0;
+	lAccelValueZ.cnt=0;
+	lGyroValueX.cnt=0;
+	lGyroValueY.cnt=0;
+	lGyroValueZ.cnt=0;
+
+	lAccelValueX.total=0;
+	lAccelValueY.total=0;
+	lAccelValueZ.total=0;
+	lGyroValueX.total=0;
+	lGyroValueY.total=0;
+	lGyroValueZ.total=0;
+
+}
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -41,7 +71,7 @@ MainWindow::MainWindow(QWidget *parent) :
     memset(lStrBuf,0,STR_BUF_SIZE);
     _ComIsOpen = false;
 	_bStartSample = false;
-	ui->StartSampleBtn->setEnabled(false);
+	ui->StartSampleBtn->setEnabled(true);
 	ui->StopSampleBtn->setEnabled(false);
 
 	_DisplayTimer.setInterval(100);
@@ -49,7 +79,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&_DisplayTimer,SIGNAL(timeout()),this,SLOT(DisplayTimeout()));
 
     setWindowTitle("IMU Calibration Tool");
-	ui->openMyComBtn->setEnabled(false);
+	ui->openMyComBtn->setEnabled(true);
     ui->closeMyComBtn->setEnabled(false); //开始“关闭串口”按钮不可用
     ui->sendMsgBtn->setEnabled(false); //开始“发送数据”按钮不可用
     this->setStyleSheet("background-color:rgb(200,200,200)");
@@ -63,7 +93,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->TotalCmd_label->setText("总数：");
 	//------------------------------------------------------------------------
 	SetTableView();
-
+	SampleInit();
 }
 char tmp;
 MainWindow::~MainWindow()
@@ -184,18 +214,24 @@ void MainWindow::SetTableView()
 
 }
 
+
+
 int  SentOrder = 0;
 void MainWindow::readMyCom() //读串口函数
 {
 	if(!_bStartSample){
 		return;
 	}
+	//----------------------------------------------
 
+
+
+
+//	lAccelValueX.avg = qAbs(1);
+	//----------------------------------------------
     static QByteArray gRecData="";
 //    static char lRxCmd[64];
-    static int lRxCmdCnt=0;
-	static int lGetCmdOrder = 0;
-	static int lRxTotal = 0;
+
 	QString lDataStr4File;
 	if( lRxCmdCnt >= ui->SampleTotal_lineEdit->text().toInt() ){
 		MainWindow::on_StopSampleBtn_clicked();
@@ -235,8 +271,12 @@ void MainWindow::readMyCom() //读串口函数
 
 						lRxCmdCnt++;
 						ui->TotalCmd_label->setText("总数："+QString("%1").arg(lRxCmdCnt));
-						lDataStr4File += QString("%1,%2,%3,%4,%5,%6,%7,%8,\r\n")
-										 .arg(lRxCmdCnt).arg(lpDataFrame->uid)
+						char lTmpUidPrint[16];
+						memset(lTmpUidPrint,0,16);
+						sprintf(lTmpUidPrint,"%08x",lpDataFrame->uid);
+						lDataStr4File += QString("%1,%2,%3,%4,%5,%6,%7,%8,%9\r\n")
+										 .arg(lRxCmdCnt)
+										 .arg(lTmpUidPrint)
 										 .arg(lpDataFrame->accel_x)
 										 .arg(lpDataFrame->accel_y)
 										 .arg(lpDataFrame->accel_z)
@@ -245,13 +285,51 @@ void MainWindow::readMyCom() //读串口函数
 										 .arg(lpDataFrame->gyro_z)
 										 .arg(lpDataFrame->baro);
 						//---------------------------------------------------
-						_pTableView->setItem(0,1,new QStandardItem("AccelX"));
-						_pTableView->setItem(1,1,new QStandardItem("AccelY"));
-						_pTableView->setItem(2,1,new QStandardItem("AccelZ"));
-						_pTableView->setItem(3,1,new QStandardItem("GyroX"));
-						_pTableView->setItem(4,1,new QStandardItem("GyroY"));
-						_pTableView->setItem(5,1,new QStandardItem("GyroZ"));
+						_pTableView->setItem(0,1,new QStandardItem(QString("%1").arg(lpDataFrame->accel_x)));
+						_pTableView->setItem(1,1,new QStandardItem(QString("%1").arg(lpDataFrame->accel_y)));
+						_pTableView->setItem(2,1,new QStandardItem(QString("%1").arg(lpDataFrame->accel_z)));
+						_pTableView->setItem(3,1,new QStandardItem(QString("%1").arg(lpDataFrame->gyro_x)));
+						_pTableView->setItem(4,1,new QStandardItem(QString("%1").arg(lpDataFrame->gyro_y)));
+						_pTableView->setItem(5,1,new QStandardItem(QString("%1").arg(lpDataFrame->gyro_z)));
 						_pTableView->setItem(5,1,new QStandardItem("Baro"));
+
+						lAccelValueX.cnt++;
+						lAccelValueY.cnt++;
+						lAccelValueZ.cnt++;
+						lGyroValueX.cnt++;
+						lGyroValueY.cnt++;
+						lGyroValueZ.cnt++;
+
+						lAccelValueX.total+=lpDataFrame->accel_x;
+						lAccelValueY.total+=lpDataFrame->accel_y;
+						lAccelValueZ.total+=lpDataFrame->accel_z;
+						lGyroValueX.total+=lpDataFrame->gyro_x;
+						lGyroValueY.total+=lpDataFrame->gyro_y;
+						lGyroValueZ.total+=lpDataFrame->gyro_z;
+
+						lAccelValueX.avg = lAccelValueX.total / lAccelValueX.cnt;
+						lAccelValueY.avg = lAccelValueY.total / lAccelValueY.cnt;
+						lAccelValueZ.avg = lAccelValueZ.total / lAccelValueZ.cnt;
+						lGyroValueX.avg = lGyroValueX.total / lGyroValueX.cnt;
+						lGyroValueY.avg = lGyroValueY.total / lGyroValueY.cnt;
+						lGyroValueZ.avg = lGyroValueZ.total / lGyroValueZ.cnt;
+
+						_pTableView->setItem(0,4,new QStandardItem(QString("%1").arg(lAccelValueX.avg)));
+						_pTableView->setItem(1,4,new QStandardItem(QString("%1").arg(lAccelValueY.avg)));
+						_pTableView->setItem(2,4,new QStandardItem(QString("%1").arg(lAccelValueZ.avg)));
+						_pTableView->setItem(3,4,new QStandardItem(QString("%1").arg(lGyroValueX.avg)));
+						_pTableView->setItem(4,4,new QStandardItem(QString("%1").arg(lGyroValueY.avg)));
+						_pTableView->setItem(5,4,new QStandardItem(QString("%1").arg(lGyroValueZ.avg)));
+						_pTableView->setItem(5,4,new QStandardItem("Baro"));
+
+//						lAccelValueX.max = qMax(lpDataFrame->accel_x,qAbs());
+//						lAccelValueY.max++;
+//						lAccelValueZ.max++;
+//						lGyroValueX.max++;
+//						lGyroValueY.max++;
+//						lGyroValueZ.max++;
+
+						//---------------------------------------------------
 					}
 
 				}else{
@@ -318,10 +396,7 @@ void MainWindow::on_openMyComBtn_clicked()
     _ComIsOpen = true;
 
 
-	if(!_pDataStorageFile->open(QIODevice::WriteOnly|QIODevice::Text)){
-		ui->textBrowser->insertPlainText(_DataStorageFileName);
-		ui->textBrowser->insertPlainText("File Open failed!\r\n");
-	}
+
 
 }
 void MainWindow::on_closeMyComBtn_clicked()
@@ -336,7 +411,7 @@ void MainWindow::on_closeMyComBtn_clicked()
     ui->parityComboBox->setEnabled(true);
     ui->stopBitsComboBox->setEnabled(true);
     ui->portNameComboBox->setEnabled(true);
-	_pDataStorageFile->close();
+
 }
 
 void MainWindow::on_sendMsgBtn_clicked()
@@ -469,8 +544,6 @@ void MainWindow::on_ChooseSaveFilePathBtn_clicked()
 												   tr("Data (*.dat);;CSV (*.csv)"));
 	ui->textBrowser->append(_DataStorageFileName);
 	_pDataStorageFile = new QFile(_DataStorageFileName);
-	ui->openMyComBtn->setEnabled(true);
-	ui->StartSampleBtn->setEnabled(true);
 }
 
 
@@ -480,11 +553,33 @@ void MainWindow::on_StartSampleBtn_clicked()
 		ui->textBrowser->append("请设置采样数！");
 		return;
 	}
+	if(_DataStorageFileName==""){
+		ui->textBrowser->append("请选择存储文件！");
+		return;
+	}
+	if(ui->IMU_ID_lineEdit->text()==""){
+		ui->textBrowser->append("请设置IMU ID！");
+		return;
+	}
+	if(!_ComIsOpen){
+		ui->textBrowser->append("请打开串口！");
+		return;
+	}
+	myCom->read(rx_buf,RX_BUF_SIZE);
+	SampleInit();
 	_bStartSample = true;
 	ui->StartSampleBtn->setEnabled(false);
 	ui->StopSampleBtn->setEnabled(true);
 	ui->SampleTotal_lineEdit->setEnabled(false);
+	ui->ChooseSaveFilePathBtn->setEnabled(false);
 	ui->SampleGpBox->setStyleSheet("background-color:rgb(0,255,0)");
+
+	if(!_pDataStorageFile->open(QIODevice::WriteOnly|QIODevice::Text)){
+		ui->textBrowser->insertPlainText(_DataStorageFileName);
+		ui->textBrowser->insertPlainText("File Open failed!\r\n");
+	}
+	setWindowTitle(ui->IMU_ID_lineEdit->text()+":"+ui->portNameComboBox->currentText());
+
 }
 
 void MainWindow::on_StopSampleBtn_clicked()
@@ -493,5 +588,7 @@ void MainWindow::on_StopSampleBtn_clicked()
 	ui->StartSampleBtn->setEnabled(true);
 	ui->StopSampleBtn->setEnabled(false);
 	ui->SampleTotal_lineEdit->setEnabled(true);
-	ui->SampleGpBox->setStyleSheet("background-color:rgb(255,0,0)");
+	ui->ChooseSaveFilePathBtn->setEnabled(true);
+	ui->SampleGpBox->setStyleSheet("background-color:rgb(255,128,0)");
+	_pDataStorageFile->close();
 }

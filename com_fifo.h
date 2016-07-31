@@ -35,6 +35,15 @@ typedef struct {
 }TYPE_sensors_data_t;
 #pragma pack(pop)
 
+typedef struct{
+	double	total;
+	double	cnt;
+	double	max;
+	double	min;
+	double	avg;
+}TYPE_INT_DATA_AVG_MAX_MIN;
+
+
 
 
 #endif // COM_FIFO_H
